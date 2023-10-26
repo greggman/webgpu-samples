@@ -1,4 +1,4 @@
-import { mat4, vec3 } from 'wgpu-matrix';
+import { mat4 } from 'wgpu-matrix';
 import { makeSample, SampleInit } from '../../components/SampleLayout';
 import normalMapWGSL from './normalMap.wgsl';
 import { createMeshRenderable } from '../../meshes/mesh';
@@ -49,6 +49,7 @@ const init: SampleInit = async ({ canvas, pageState, gui }) => {
     lightIntensity: number;
     depthScale: number;
     depthLayers: number;
+    animate: boolean;
     Texture: string;
     'Reset Light': () => void;
   }
@@ -56,14 +57,15 @@ const init: SampleInit = async ({ canvas, pageState, gui }) => {
   const settings: GUISettings = {
     'Bump Mode': 'Normal Map',
     cameraPosX: 0.0,
-    cameraPosY: 0.0,
-    cameraPosZ: -2.4,
+    cameraPosY: 0.8,
+    cameraPosZ: -1.4,
     lightPosX: 1.7,
-    lightPosY: -0.7,
-    lightPosZ: 1.9,
+    lightPosY: 0.7,
+    lightPosZ: -1.9,
     lightIntensity: 0.02,
     depthScale: 0.05,
     depthLayers: 16,
+    animate: true,
     Texture: 'Spiral',
     'Reset Light': () => {
       return;
@@ -204,30 +206,22 @@ const init: SampleInit = async ({ canvas, pageState, gui }) => {
   const projectionMatrix = mat4.perspective(
     (2 * Math.PI) / 5,
     aspect,
-    1,
-    100.0
+    0.1,
+    10.0
   ) as Float32Array;
 
   function getViewMatrix() {
-    const viewMatrix = mat4.identity();
-    mat4.translate(
-      viewMatrix,
-      vec3.fromValues(
-        settings.cameraPosX,
-        settings.cameraPosY,
-        settings.cameraPosZ
-      ),
-      viewMatrix
+    return mat4.lookAt(
+      [settings.cameraPosX, settings.cameraPosY, settings.cameraPosZ],
+      [0, 0, 0],
+      [0, 1, 0]
     );
-    return viewMatrix;
   }
 
-  function getModelMatrix() {
+  function getModelMatrix(time: number) {
     const modelMatrix = mat4.create();
     mat4.identity(modelMatrix);
-    mat4.rotateX(modelMatrix, 10, modelMatrix);
-    const now = Date.now() / 1000;
-    mat4.rotateY(modelMatrix, now * -0.5, modelMatrix);
+    mat4.rotateY(modelMatrix, time * -0.5, modelMatrix);
     return modelMatrix;
   }
 
@@ -277,6 +271,7 @@ const init: SampleInit = async ({ canvas, pageState, gui }) => {
   gui
     .add(settings, 'Texture', ['Spiral', 'Toybox', 'BrickWall'])
     .onChange(onChangeTexture);
+  gui.add(settings, 'animate');
   const lightFolder = gui.addFolder('Light');
   const depthFolder = gui.addFolder('Depth');
   lightFolder.add(settings, 'Reset Light').onChange(() => {
@@ -304,15 +299,18 @@ const init: SampleInit = async ({ canvas, pageState, gui }) => {
     ).style.position = 'absolute';
   }
 
-  function frame() {
+  let then = 0;
+  let time = 0;
+  function frame(now) {
     if (!pageState.active) return;
 
-    // Write to normal map shader
-    const viewMatrixTemp = getViewMatrix();
-    const viewMatrix = viewMatrixTemp as Float32Array;
+    const elapsedTime = settings.animate ? (then - now) * 0.001 : 0;
+    time += elapsedTime;
+    then = now;
 
-    const modelMatrixTemp = getModelMatrix();
-    const modelMatrix = modelMatrixTemp as Float32Array;
+    // Write to normal map shader
+    const viewMatrix = getViewMatrix();
+    const modelMatrix = getModelMatrix(time);
 
     const matrices = new Float32Array([
       ...projectionMatrix,

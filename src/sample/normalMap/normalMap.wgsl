@@ -39,14 +39,6 @@ struct VertexOutput {
   @location(7) tbnTS2: vec3<f32>,
 }
 
-fn transpose3x3(mat: mat3x3f) -> mat3x3f  {
-  return mat3x3f(
-    mat[0][0], mat[1][0], mat[2][0],
-    mat[0][1], mat[1][1], mat[2][1],
-    mat[0][2], mat[1][2], mat[2][2],
-  );
-}
-
 // Uniforms
 @group(0) @binding(0) var<uniform> spaceTransform : SpaceTransformUniforms;
 @group(0) @binding(1) var<uniform> mapInfo: Uniforms_MapInfo;
@@ -125,7 +117,7 @@ fn vertexMain(input: VertexInput) -> VertexOutput {
   var vertexNormal: vec3f = normalize(input.normal);
 
   // Convert tbn unit vectors to mv space for a model view tbn
-  var tbnTS = transpose3x3(
+  var tbnTS = transpose(
     MV3x3 * mat3x3f(
       vertexTangent,
       vertexBitangent,
