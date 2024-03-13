@@ -69,7 +69,46 @@ function writeRedirect(filename) {
   );
 }
 
+/**
+ * Writes a sitemap.xml for all the examples
+ */
+function writeSitemap(sampleFiles) {
+  const makeSitemapEntry = (filename) => {
+    const sampleName = path.basename(path.dirname(filename));
+    const url = `https://webgpu.github.io/webgpu-samples/?sample=${sampleName}`;
+    return `
+      <url>
+        <loc>${url}</loc> <changefreq>monthly</changefreq> <priority>0.5</priority> <xhtml:link rel="alternate" hreflang="en" href="${url}" /> </url>
+    `;
+  };
+
+  const xml = `
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xhtml="http://www.w3.org/1999/xhtml" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${sampleFiles.map(makeSitemapEntry).join('\n')}
+</urlset>
+`;
+
+  {
+    const filename = path.join(outPath, 'sitemap.xml');
+    console.log('created', filename);
+    fs.writeFileSync(filename, xml);
+  }
+  {
+    const filename = path.join(outPath, 'robots.txt');
+    console.log('created', filename);
+    fs.writeFileSync(
+      filename,
+      'Sitemap: https://webgpu.github.io/webgpu/sitemap.xml\n'
+    );
+  }
+}
+
 const sampleFiles = readDirSyncRecursive('sample');
+
+// Generate a sitemap for all samples
+const allSamples = sampleFiles.filter((n) => n.endsWith('meta.ts'));
+writeSitemap(allSamples);
 
 // Generate redirects for all samples
 sampleFiles
