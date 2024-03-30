@@ -1,4 +1,4 @@
-import { createElem as el } from './utils/elem';
+import { ElemSpec, makeElem } from './utils/elem';
 import { SampleInfo, SourceInfo, pageCategories } from './samples';
 import { monokai } from '@uiw/codemirror-theme-monokai';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -196,7 +196,7 @@ function setSampleIFrame(
   sampleContainerElem.innerHTML = '';
   if (filename) {
     const src = url || `${filename}${search}`;
-    sampleContainerElem.appendChild(el('iframe', { src }));
+    sampleContainerElem.appendChild(makeElem(['iframe', { src }]));
     sampleContainerElem.style.height = sources.length > 0 ? '600px' : '100%';
 
     if (url) {
@@ -227,27 +227,34 @@ function setSampleIFrame(
     const active = (i === 0).toString();
     const name = basename(source.path);
     codeTabsElem.appendChild(
-      el('li', {}, [
-        el('a', {
-          href: `#${path}`,
-          textContent: name,
-          dataset: {
-            active,
-            name,
+      makeElem([
+        'li',
+        [
+          'a',
+          {
+            href: `#${path}`,
+            textContent: name,
+            dataset: {
+              active,
+              name,
+            },
+            onClick: (e: PointerEvent) => {
+              setSourceTabHash(e, source);
+            },
           },
-          onClick: (e: PointerEvent) => {
-            setSourceTabHash(e, source);
-          },
-        }),
+        ],
       ])
     );
-    const elem = el('div', {
-      className: 'sourceFileContainer',
-      dataset: {
-        active,
-        name,
+    const elem = makeElem([
+      'div',
+      {
+        className: 'sourceFileContainer',
+        dataset: {
+          active,
+          name,
+        },
       },
-    });
+    ]);
     sourcesElem.appendChild(elem);
     const url = isSameDomain(path) ? `${filename}/${path}` : source.path;
     codeMirrorEditors.push(makeCodeMirrorEditor(elem, url));
@@ -279,33 +286,45 @@ for (const { title, description, samples } of pageCategories) {
     samplesByKey.set(key, sampleInfo);
   }
 
-  sampleListElem.appendChild(
-    el('ul', { className: 'exampleList' }, [
-      el('div', {}, [
-        el('div', { className: 'sampleCategory' }, [
-          el('h3', {
-            style: { 'margin-top': '5px' },
-            textContent: title,
-            dataset: { tooltip: description },
+  const entries: ElemSpec[] = Object.entries(samples).map(
+    ([key, sampleInfo]) => [
+      'li',
+      [
+        'a',
+        {
+          href: sampleInfo.filename,
+          ...(!sampleInfo.openInNewTab && {
+            onClick: (e: PointerEvent) => {
+              setSampleIFrameURL(e, sampleInfo);
+            },
           }),
-        ]),
-        ...Object.entries(samples).map(([key, sampleInfo]) =>
-          el('li', {}, [
-            el('a', {
-              href: sampleInfo.filename,
-              ...(!sampleInfo.openInNewTab && {
-                onClick: (e: PointerEvent) => {
-                  setSampleIFrameURL(e, sampleInfo);
-                },
-              }),
-              textContent: `${sampleInfo.tocName || key}${
-                sampleInfo.openInNewTab ? ' ↗️' : ''
-              }`,
-              ...(sampleInfo.openInNewTab && { target: '_blank' }),
-            }),
-          ])
-        ),
-      ]),
+          ...(sampleInfo.openInNewTab && { target: '_blank' }),
+        },
+        `${sampleInfo.tocName || key}${sampleInfo.openInNewTab ? ' ↗️' : ''}`,
+      ],
+    ]
+  );
+
+  sampleListElem.appendChild(
+    makeElem([
+      'ul',
+      { className: 'exampleList' },
+      [
+        'div',
+        [
+          'div',
+          { className: 'sampleCategory' },
+          [
+            'h3',
+            {
+              style: { 'margin-top': '5px' },
+              textContent: title,
+              dataset: { tooltip: description },
+            },
+          ],
+        ],
+        ...entries,
+      ],
     ])
   );
 }
