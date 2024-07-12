@@ -7,6 +7,7 @@ import clusteredShading from '../sample/clusteredShading/meta';
 import cornell from '../sample/cornell/meta';
 import computeBoids from '../sample/computeBoids/meta';
 import cubemap from '../sample/cubemap/meta';
+import depthTexturePreview from '../sample/depthTexturePreview/meta';
 import deferredRendering from '../sample/deferredRendering/meta';
 import fractalCube from '../sample/fractalCube/meta';
 import gameOfLife from '../sample/gameOfLife/meta';
@@ -74,6 +75,7 @@ export const pageCategories: PageCategory[] = [
       instancedCube,
       fractalCube,
       cubemap,
+      depthTexturePreview,
     },
   },
 
